@@ -12,7 +12,7 @@ export async function mealRoutes(app: FastifyInstance) {
     {
       preHandler: [checkUserCookieExist],
     },
-    async (request: FastifyRequest, reply) => {
+    async (request, reply) => {
       const createMealBodySchema = z.object({
         name: z.string(),
         description: z.string(),
@@ -35,6 +35,31 @@ export async function mealRoutes(app: FastifyInstance) {
       });
 
       reply.status(201).send(response);
+    }
+  );
+
+  app.delete(
+    "/meal",
+    {
+      preHandler: [checkUserCookieExist],
+    },
+    async (request, reply) => {
+      const createMealBodySchema = z.object({
+        id: z.number(),
+      });
+
+      const { sessionId } = request.cookies;
+
+      const { id } = createMealBodySchema.parse(request.body);
+
+      await prisma.meal.delete({
+        where: {
+          id,
+          userId: Number(sessionId),
+        },
+      });
+
+      reply.status(200).send();
     }
   );
 }

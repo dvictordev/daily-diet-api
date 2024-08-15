@@ -174,20 +174,28 @@ export async function mealRoutes(app: FastifyInstance) {
         return meal.In_diet == false;
       });
 
-      const bestSequence = await prisma.meal.findMany({
-        where: {
-          In_diet: true,
+      const { bestOnDietSequence } = response.reduce(
+        (acc, meal: any) => {
+          if (meal.is_on_diet) {
+            acc.currentSequence += 1;
+          } else {
+            acc.currentSequence = 0;
+          }
+
+          if (acc.currentSequence > acc.bestOnDietSequence) {
+            acc.bestOnDietSequence = acc.currentSequence;
+          }
+
+          return acc;
         },
-        orderBy: {
-          created_at: "asc",
-        },
-      });
+        { bestOnDietSequence: 0, currentSequence: 0 }
+      );
 
       reply.status(200).send({
         total,
         totalInDietMeals: totalInDietMeals.length,
         totalOutDietMeals: totalOutDietMeals.length,
-        bestSequence: bestSequence.length,
+        bestSequence: bestOnDietSequence,
       });
     }
   );
